@@ -89,7 +89,8 @@ extension TextView: CALayerDelegate, NSViewLayerContentScaleDelegate {
 
         let currentHeight = frame.height
         let clipviewHeight = scrollView.contentSize.height
-        let newHeight = round(max(clipviewHeight, layoutManager.contentHeight))
+        let inset = computedTextContainerInset
+        let newHeight = round(max(clipviewHeight, layoutManager.contentHeight + inset.top + inset.bottom))
 
         if abs(currentHeight - newHeight) > 1e-10 {
             setFrameSize(CGSize(width: frame.width, height: newHeight))
@@ -240,10 +241,10 @@ extension TextView: LayoutManagerDelegate {
         [selection]
     }
 
-    func layoutManager(_ layoutManager: LayoutManager, attributedRopeFor attrRope: AttributedRope) -> AttributedRope {
-        let new = attrRope.mergingAttributes(defaultAttributes, mergePolicy: .keepCurrent)
+    func layoutManager(_ layoutManager: LayoutManager, attributedRopeFor attrRope: consuming AttributedRope) -> AttributedRope {
+        attrRope.mergeAttributes(defaultAttributes, mergePolicy: .keepCurrent)
 
-        return new.transformingAttributes(\.token) { attr in
+        return attrRope.transformingAttributes(\.token) { attr in
             var attributes = theme[attr.value!.type] ?? AttributedRope.Attributes()
 
             if attributes.font != nil {
@@ -335,7 +336,12 @@ extension TextView {
 
             if updateLineNumbers {
                 let n = lineno ?? buffer.lines.distance(from: buffer.startIndex, to: line.range.lowerBound)
-                lineNumberView.addLineNumber(n+1, withAlignmentFrame: line.alignmentFrame)
+                let inset = computedTextContainerInset
+                let origin = CGPoint(
+                    x: line.alignmentFrame.minX + inset.left - lineNumberView.frame.width,
+                    y: line.alignmentFrame.minY + inset.top
+                )
+                lineNumberView.addLineNumber(n+1, withAlignmentFrame: CGRect(origin: origin, size: line.alignmentFrame.size))
                 lineno = n+1
             }
         }
