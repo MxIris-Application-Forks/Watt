@@ -152,7 +152,7 @@ struct Spans<T>: BTree {
     var root: BTreeNode<SpansSummary<T>>
 
     var upperBound: Int {
-        root.measure(using: SpansBaseMetric())
+        root.measure(using: SpansBaseMetric(), edge: .trailing)
     }
 
     init(_ root: BTreeNode<SpansSummary<T>>) {
@@ -276,7 +276,7 @@ struct Spans<T>: BTree {
 
 extension Spans {
     struct SpansBaseMetric: BTreeMetric {
-        func measure(summary: SpansSummary<T>, count: Int) -> Int {
+        func measure(summary: SpansSummary<T>, count: Int, edge: BTreeMetricEdge) -> Int {
             count
         }
 
@@ -355,7 +355,7 @@ extension Spans {
 // count(SpansMetric(), upThrough: 10, edge: .trailing) -> 2
 extension Spans {
     struct SpansMetric: BTreeMetric {
-        func measure(summary: SpansSummary<T>, count: Int) -> Int {
+        func measure(summary: SpansSummary<T>, count: Int, edge: BTreeMetricEdge) -> Int {
             summary.spans
         }
         
@@ -450,7 +450,7 @@ extension Spans: BidirectionalCollection {
     typealias Index = BTreeNode<SpansSummary<T>>.Index
 
     var count: Int {
-        root.measure(using: SpansMetric())
+        root.measure(using: SpansMetric(), edge: .trailing)
     }
 
     var startIndex: Index {
@@ -494,7 +494,7 @@ extension Spans: BidirectionalCollection {
     }
 
     func index(before i: consuming Index) -> Index {
-        root.index(before: i, in: startIndex..<endIndex, using: SpansMetric(), edge: .leading)
+        root.index(before: i, in: startIndex..<endIndex, using: SpansMetric(), edge: .leading, isKnownAligned: false)
     }
 
     func index(after i: Index) -> Index {
@@ -506,7 +506,7 @@ extension Spans: BidirectionalCollection {
     }
 
     func index(_ i: consuming Index, offsetBy distance: Int, limitedBy limit: Index) -> Index? {
-        root.index(i, offsetBy: distance, limitedBy: limit, in: startIndex..<endIndex, using: SpansMetric(), edge: .leading)
+        root.index(i, offsetBy: distance, limitedBy: limit, in: startIndex..<endIndex, using: SpansMetric(), edge: .leading, isKnownAligned: false)
     }
 
     func distance(from start: Index, to end: Index) -> Int {
@@ -615,7 +615,7 @@ extension SpansSlice: BidirectionalCollection {
     }
 
     func index(before i: Index) -> Index {
-        root.index(before: i, in: startIndex..<endIndex, using: Spans.SpansMetric(), edge: .leading)
+        root.index(before: i, in: startIndex..<endIndex, using: Spans.SpansMetric(), edge: .leading, isKnownAligned: false)
     }
 
     func index(after i: Index) -> Index {
@@ -627,7 +627,7 @@ extension SpansSlice: BidirectionalCollection {
     }
 
     func index(_ i: Index, offsetBy distance: Int, limitedBy limit: Index) -> Index? {
-        root.index(i, offsetBy: distance, limitedBy: limit, in: startIndex..<endIndex, using: Spans.SpansMetric(), edge: .leading)
+        root.index(i, offsetBy: distance, limitedBy: limit, in: startIndex..<endIndex, using: Spans.SpansMetric(), edge: .leading, isKnownAligned: false)
     }
 
     func distance(from start: Index, to end: Index) -> Int {
